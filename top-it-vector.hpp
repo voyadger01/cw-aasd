@@ -6,10 +6,14 @@ namespace topit
   template< class T >
   struct Vector
   {
-    
   private:
     T* data_;
     size_t size_, capacity_;
+  public:
+    Vector< T >();
+    ~Vector< T >();
+    bool isEmpty() const noexcept;
+    
   };
 }
 
