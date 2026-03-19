@@ -15,10 +15,28 @@ bool testVectorWithValue()
 {
   topit::Vector< int > v;
   v.pushBack(1);
-  bool c = v.isEmpty();
-  return !c;
+  return !v.isEmpty();
 }
 
+bool testCopyConstructor()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  topit::Vector< int > yay = v;
+  bool isAllEqual = v.getSize() == yay.getSize();
+  for (size_t i = 0; i < v.getSize(); i++) {
+    isAllEqual = isAllEqual && v[i] == yay[i];
+  } 
+  return isAllEqual;
+}
+
+bool testElementAccess()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  return v[0] == 1 && v[1] == 2;
+}
 
 int main()
 {
@@ -26,7 +44,10 @@ int main()
   using pair_t = std::pair< const char*, test_t >;
   pair_t tests[] = {
     {"Default vector is empty", testDefaultVector},
-    {"Default vector is not empty", testVectorWithValue}
+    {"Default vector is not empty", testVectorWithValue},
+    {"Inbound access elements", testCopyConstructor},
+    {"Sizes must be equal", testElementAccess}
+
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;
