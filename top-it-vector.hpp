@@ -115,6 +115,7 @@ template < class T > bool topit::Vector< T >::isEmpty() const noexcept
 
 template< class T > void topit::Vector< T >::popBack()
 {
-
+  assert(size_ > 0);
+  size_--;
 }
 #endif
