@@ -34,7 +34,7 @@ namespace topit
 template< class T >
 size_t topit::Vector< T >::getCapacity() const noexcept
 {
-
+  return capacity_;
 }
 
 template < class T > void topit::Vector< T >::pushFront(const T &val)
