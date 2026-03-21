@@ -25,7 +25,7 @@ namespace topit
     bool isEmpty() const noexcept;
     void pushBack(const T &val);
     void pushFront(const T &val);
-    void pop_back();
+    void popBack();
     void swap(Vector< T > &rhs) noexcept;
   };
 }
@@ -111,5 +111,10 @@ template < class T > topit::Vector< T >::~Vector< T >()
 template < class T > bool topit::Vector< T >::isEmpty() const noexcept
 {
   return !size_;
+}
+
+template< class T > void topit::Vector< T >::popBack()
+{
+
 }
 #endif

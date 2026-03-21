@@ -38,6 +38,22 @@ bool testElementAccess()
   return v[0] == 1 && v[1] == 2;
 }
 
+bool testAfterPopEmpty()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.popBack();
+  return v.isEmpty();
+}
+
+bool testSizeAfterPop()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.popBack();
+  return v.getSize() == 1;
+}
 int main()
 {
   using test_t = bool(*)();
@@ -46,7 +62,9 @@ int main()
     {"Default vector is empty", testDefaultVector},
     {"Default vector is not empty", testVectorWithValue},
     {"Inbound access elements", testCopyConstructor},
-    {"Elements must be equal", testElementAccess}
+    {"Elements must be equal", testElementAccess},
+    {"Vector after pop back must be empty", testAfterPopEmpty},
+    {"Vector after pop back must have size = 1", testAfterPopEmpty}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;
