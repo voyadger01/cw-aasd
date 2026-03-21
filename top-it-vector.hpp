@@ -122,7 +122,12 @@ template< class T > void topit::Vector< T >::popBack() noexcept
 
 template< class T > void topit::Vector< T >::popFront() noexcept
 {
-  
+  assert(size_ > 0);
+  Vector< T > copy(getSize() - 1);
+  for (size_t i = 1; i < getSize(); i++) {
+    copy[i - 1] = (*this)[i];
+  }
+  swap(copy);
 }
 
 #endif
