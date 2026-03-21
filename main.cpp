@@ -46,8 +46,7 @@ int main()
     {"Default vector is empty", testDefaultVector},
     {"Default vector is not empty", testVectorWithValue},
     {"Inbound access elements", testCopyConstructor},
-    {"Sizes must be equal", testElementAccess}
-
+    {"Elements must be equal", testElementAccess}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;
