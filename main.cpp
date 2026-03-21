@@ -82,6 +82,23 @@ bool testSwap()
   return v[0] == 2 && zv[0] == 1;
 }
 
+bool testCapacity()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  return v.getCapacity() == v.getSize() && v.getCapacity() == 2;
+}
+
+bool testCapacityAfterPopBack()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.popBack();
+  return v.getCapacity() == 2;
+}
+
 int main()
 {
   using test_t = bool(*)();
@@ -95,7 +112,9 @@ int main()
     {"Vector after pop back must have size = 1", testAfterPopEmpty},
     {"Vector after pop front must be empty", testAfterPopEmpty},
     {"Vector after pop front must have size = 1", testAfterPopEmpty},
-    {"Vector must swap their values", testSwap}
+    {"Vector must swap their values", testSwap},
+    {"Vector must have cap == size", testCapacity},
+    {"Capacity must not change after pop back", testCapacityAfterPopBack}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;

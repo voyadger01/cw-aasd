@@ -31,6 +31,12 @@ namespace topit
   };
 }
 
+template< class T >
+size_t topit::Vector< T >::getCapacity() const noexcept
+{
+
+}
+
 template < class T > void topit::Vector< T >::pushFront(const T &val)
 {
   Vector< T > copy(getSize() + 1);
