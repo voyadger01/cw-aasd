@@ -26,25 +26,34 @@ namespace topit
     void pushBack(const T &val);
     void pushFront(const T &val);
     void popBack() noexcept;
-    void popFront() noexcept;
+    void popFront();
     void swap(Vector< T > &rhs) noexcept;
   };
 }
 
-template< class T >
-size_t topit::Vector< T >::getCapacity() const noexcept
+template < class T > size_t topit::Vector< T >::getCapacity() const noexcept
 {
   return capacity_;
 }
 
 template < class T > void topit::Vector< T >::pushFront(const T &val)
 {
-  Vector< T > copy(getSize() + 1);
-  copy[0] = val;
-  for (size_t i = 0; i < getSize(); i++) {
-    copy[i + 1] = (*this)[i];
+  if (size_ == capacity_) {
+    size_t new_cap = capacity_ ? capacity_ * 2 : 1;
+    T *new_data = new T[new_cap];
+    for (size_t i = 0; i < size_; i++) {
+      new_data[i + 1] = data_[i];
+    }
+    delete[] data_;
+    data_ = new_data;
+    capacity_ = new_cap;
+  } else {
+    for (size_t i = size_; i > 0; i++) {
+      data_[i] = data_[i - 1];
+    }
   }
-  swap(copy);
+  data_[0] = val;
+  ++size_;
 }
 
 template < class T > void topit::Vector< T >::swap(Vector< T > &rhs) noexcept
@@ -95,12 +104,17 @@ topit::Vector< T >::Vector(const Vector< T > &rhs):
 
 template < class T > void topit::Vector< T >::pushBack(const T &val)
 {
-  Vector< T > copy(getSize() + 1);
-  copy[getSize()] = val;
-  for (size_t i = 0; i < getSize(); i++) {
-    copy[i] = (*this)[i];
+  if (size_ == capacity_) {
+    size_t new_cap = capacity_ ? capacity_ * 2 : 1;
+    T *new_data = new T[new_cap];
+    for (size_t i = 0; i < size_; i++) {
+      new_data[i] = data_[i];
+    }
+    delete[] data_;
+    data_ = new_data;
+    capacity_ = new_cap;
   }
-  swap(copy);
+  data_[size_++] = val;
 }
 
 template < class T >
@@ -120,13 +134,13 @@ template < class T > bool topit::Vector< T >::isEmpty() const noexcept
   return !size_;
 }
 
-template< class T > void topit::Vector< T >::popBack() noexcept
+template < class T > void topit::Vector< T >::popBack() noexcept
 {
   assert(size_ > 0);
-  size_--;
+  data_[--size_].~T();
 }
 
-template< class T > void topit::Vector< T >::popFront() noexcept
+template < class T > void topit::Vector< T >::popFront()
 {
   assert(size_ > 0);
   Vector< T > copy(getSize() - 1);

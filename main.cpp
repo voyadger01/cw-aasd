@@ -1,14 +1,12 @@
 #include "top-it-vector.hpp"
 #include <cstddef>
-#include <ios>
 #include <iostream>
 #include <utility>
 
 bool testDefaultVector()
 {
   topit::Vector< int > v;
-  bool c = v.isEmpty();
-  return c;
+  return v.isEmpty();
 }
 
 bool testVectorWithValue()
@@ -26,7 +24,7 @@ bool testCopyConstructor()
   bool isAllEqual = v.getSize() == yay.getSize();
   for (size_t i = 0; i < v.getSize(); i++) {
     isAllEqual = isAllEqual && v[i] == yay[i];
-  } 
+  }
   return isAllEqual;
 }
 
@@ -99,22 +97,40 @@ bool testCapacityAfterPopBack()
   return v.getCapacity() == 2;
 }
 
+bool testAssignmentOperator()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  topit::Vector< int > assign;
+  assign = v;
+  return assign.getSize() == 1 && assign[0] == 1;
+}
+
+bool testPushFront()
+{
+  topit::Vector< int > v;
+  v.pushFront(2);
+  v.pushFront(1);
+  return v.getSize() == 2 && v[0] == 1 && v[1] == 2;
+}
+
 int main()
 {
-  using test_t = bool(*)();
-  using pair_t = std::pair< const char*, test_t >;
-  pair_t tests[] = {
-    {"Default vector is empty", testDefaultVector},
+  using test_t = bool (*)();
+  using pair_t = std::pair< const char *, test_t >;
+  pair_t tests[] = {{"Default vector is empty", testDefaultVector},
     {"Default vector is not empty", testVectorWithValue},
-    {"Inbound access elements", testCopyConstructor},
+    {"Copy constructor works", testCopyConstructor},
     {"Elements must be equal", testElementAccess},
     {"Vector after pop back must be empty", testAfterPopEmpty},
-    {"Vector after pop back must have size = 1", testAfterPopEmpty},
-    {"Vector after pop front must be empty", testAfterPopEmpty},
-    {"Vector after pop front must have size = 1", testAfterPopEmpty},
+    {"Vector after pop back must have size = 1", testSizeAfterPop},
+    {"Vector after pop front must be empty", testAfterPopFrontEmpty},
+    {"Vector after pop front must have size = 1", testSizeAfterPopFront},
     {"Vector must swap their values", testSwap},
     {"Vector must have cap == size", testCapacity},
-    {"Capacity must not change after pop back", testCapacityAfterPopBack}
+    {"Capacity must not change after pop back", testCapacityAfterPopBack},
+    {"Assignment operator works", testAssignmentOperator},
+    {"Push front works", testPushFront}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;
