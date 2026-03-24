@@ -177,6 +177,7 @@ bool testPushFront()
   return v.getSize() == 2 && v[0] == 1 && v[1] == 2;
 }
 
+
 int main()
 {
   using test_t = bool (*)();

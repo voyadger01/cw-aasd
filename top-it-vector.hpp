@@ -20,16 +20,16 @@ namespace topit
 
   public:
     Vector< T >();
-    Vector< T >(Vector< T >&&) noexcept;
+    Vector< T >(Vector< T > &&) noexcept;
     Vector< T >(const Vector< T > &);
     Vector< T > &operator=(const Vector< T > &rhs);
-    Vector< T > &operator=(Vector< T >&&) noexcept;
+    Vector< T > &operator=(Vector< T > &&) noexcept;
     ~Vector< T >();
 
     T &operator[](size_t id) noexcept;
     const T &operator[](size_t id) const noexcept;
-    T& at(size_t id);
-    const T& at(size_t id) const;
+    T &at(size_t id);
+    const T &at(size_t id) const;
 
     size_t getSize() const noexcept;
     size_t getCapacity() const noexcept;
@@ -40,20 +40,18 @@ namespace topit
     void popFront();
     void swap(Vector< T > &rhs) noexcept;
 
-    // стр гарант + тест
-    void insert(size_t i, const T& val);
+    // стр гарант + тест + переиспользовать
+    void insert(size_t i, const T &val);
     void erase(size_t i);
-    void insert(size_t i, const Vector< T >& rhs, size_t beg, size_t end);
+    void insert(size_t i, const Vector< T > &rhs, size_t beg, size_t end);
     void erase(size_t beg, size_t end);
 
-
-    template< class VecIt, class FwdIt>
-    void insert(VecIt pos, FwdIt beg, FwdIt end);
+    template < class VecIt, class FwdIt > void insert(VecIt pos, FwdIt beg, FwdIt end);
   };
 }
 
-template< class T >
-topit::Vector< T >::Vector(Vector< T >&& rhs) noexcept:
+template < class T >
+topit::Vector< T >::Vector(Vector< T > &&rhs) noexcept:
   data_(rhs.data_),
   size_(rhs.size_),
   capacity_(rhs.capacity_)
@@ -66,8 +64,7 @@ template < class T > size_t topit::Vector< T >::getCapacity() const noexcept
   return capacity_;
 }
 
-template< class T >
-topit::Vector< T >& topit::Vector< T >::operator=(Vector< T >&& rhs) noexcept
+template < class T > topit::Vector< T > &topit::Vector< T >::operator=(Vector< T > &&rhs) noexcept
 {
   if (this == std::addressof(rhs)) {
     return *this;
@@ -120,27 +117,25 @@ template < class T > const T &topit::Vector< T >::operator[](size_t id) const no
   return data_[id];
 }
 
-template< class T >
-T& topit::Vector< T >::at(size_t id)
+template < class T > T &topit::Vector< T >::at(size_t id)
 {
-  const Vector< T >* cthis = this;
-  const T& ret = cthis->at(id);
-  return const_cast< T& >(ret);
+  const Vector< T > *cthis = this;
+  const T &ret = cthis->at(id);
+  return const_cast< T & >(ret);
 }
 
-template< class T >
-const T& topit::Vector< T >::at(size_t id) const
+template < class T > const T &topit::Vector< T >::at(size_t id) const
 {
   if (id < getSize()) {
     return data_[id];
   }
-  throw std::out_of_range("bad id");  
+  throw std::out_of_range("bad id");
 }
 
 template < class T > T &topit::Vector< T >::operator[](size_t id) noexcept
 {
-  const Vector< T >* cthis = this;
-  const T& ret = (*cthis)(id);
+  const Vector< T > *cthis = this;
+  const T &ret = (*cthis)(id);
   return const_cast< T >(ret);
 }
 
@@ -210,6 +205,51 @@ template < class T > void topit::Vector< T >::popFront()
     copy[i - 1] = (*this)[i];
   }
   swap(copy);
+}
+
+template < class T > void topit::Vector< T >::erase(size_t beg, size_t end)
+{
+  assert(beg <= end && end <= size_);
+  if (beg == end) {
+    return;
+  }
+  Vector< T > newVec(size_ - (end - beg));
+  for (size_t i = 0; i < beg; ++i) {
+    newVec.data_[i] = data_[i];
+  }
+  for (size_t i = end; i < size_; ++i) {
+    newVec.data_[i - (end - beg)] = data_[i];
+  }
+  swap(newVec);
+}
+
+template < class T > void topit::Vector< T >::erase(size_t i)
+{
+  erase(i, i + 1);
+}
+
+template < class T > void topit::Vector< T >::insert(size_t i, const Vector< T > &rhs, size_t beg, size_t end)
+{
+  assert(i <= size_ && beg <= end && end <= rhs.getSize());
+  size_t count = end - beg;
+  Vector< T > newVec(size_ + count);
+  for (size_t k = 0; k < i; ++k) {
+    newVec.data_[k] = data_[k];
+  }
+  for (size_t k = 0; k < count; ++k) {
+    newVec.data_[i + k] = rhs.at(beg + k);
+  }
+  for (size_t k = i; k < size_; ++k) {
+    newVec.data_[count + k] = data_[k];
+  }
+  swap(newVec);
+}
+
+template < class T > void topit::Vector< T >::insert(size_t i, const T &val)
+{
+  Vector< T > tmp;
+  tmp.pushBack(val);
+  insert(i, tmp, 0, 1);
 }
 
 #endif
