@@ -2,6 +2,7 @@
 #define TOP_IT_VECTOR_HPP
 #include <cassert>
 #include <cstddef>
+#include <memory>
 #include <utility>
 namespace topit
 {
@@ -49,6 +50,17 @@ template < class T > size_t topit::Vector< T >::getCapacity() const noexcept
   return capacity_;
 }
 
+template< class T >
+topit::Vector< T >& topit::Vector< T >::operator=(Vector< T >&& rhs) noexcept
+{
+  if (this == std::addressof(rhs)) {
+    return *this;
+  }
+  Vector< T > cpy(std::move(rhs));
+  swap(cpy);
+  return *this;
+}
+
 template < class T > void topit::Vector< T >::pushFront(const T &val)
 {
   if (size_ == capacity_) {
@@ -78,6 +90,9 @@ template < class T > void topit::Vector< T >::swap(Vector< T > &rhs) noexcept
 
 template < class T > topit::Vector< T > &topit::Vector< T >::operator=(const Vector< T > &rhs)
 {
+  if (this == std::addressof(rhs)) {
+    return *this;
+  }
   Vector< T > copy(rhs);
   swap(copy);
   return *this;
