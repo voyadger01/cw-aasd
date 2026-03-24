@@ -135,8 +135,8 @@ template < class T > const T &topit::Vector< T >::at(size_t id) const
 template < class T > T &topit::Vector< T >::operator[](size_t id) noexcept
 {
   const Vector< T > *cthis = this;
-  const T &ret = (*cthis)(id);
-  return const_cast< T >(ret);
+  const T &ret = (*cthis)[id];
+  return const_cast< T& >(ret);
 }
 
 template < class T > size_t topit::Vector< T >::getSize() const noexcept

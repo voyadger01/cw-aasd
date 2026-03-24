@@ -42,7 +42,7 @@ bool testElementConstAccess()
   topit::Vector< int > v;
   v.pushBack(1);
   v.pushBack(2);
-  const topit::Vector< int >& rv = v;
+  const topit::Vector< int > &rv = v;
   return rv[0] == 1 && rv[1] == 2;
 }
 
@@ -52,7 +52,7 @@ bool testElementOutOfBoundCheckedAccess()
   try {
     v.at(0);
     return false;
-  } catch (const std::out_of_range&) {
+  } catch (const std::out_of_range &) {
     return true;
   } catch (...) {
     return false;
@@ -74,11 +74,11 @@ bool testElementInboundCheckedAccess()
 bool testElementOutOfBoundConstCheckedAccess()
 {
   topit::Vector< int > v;
-  const topit::Vector< int >& rv = v;
+  const topit::Vector< int > &rv = v;
   try {
     rv.at(0);
     return false;
-  } catch (const std::out_of_range&) {
+  } catch (const std::out_of_range &) {
     return true;
   } catch (...) {
     return false;
@@ -89,7 +89,7 @@ bool testElementInboundConstCheckedAccess()
 {
   topit::Vector< int > v;
   v.pushBack(1);
-  const topit::Vector< int >& rv = v;
+  const topit::Vector< int > &rv = v;
   try {
     const int &val = rv.at(0);
     return val == 1;
@@ -97,7 +97,6 @@ bool testElementInboundConstCheckedAccess()
     return false;
   }
 }
-
 
 bool testAfterPopEmpty()
 {
@@ -177,15 +176,87 @@ bool testPushFront()
   return v.getSize() == 2 && v[0] == 1 && v[1] == 2;
 }
 
+bool testMoveConstructor()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  topit::Vector< int > moved(std::move(v));
+  return moved.getSize() == 2 && moved[0] == 1 && moved[1] == 2;
+}
+bool testMoveAssignment()
+{
+  topit::Vector< int > v, dest;
+  v.pushBack(1);
+  dest = std::move(v);
+  return dest[0] == 1;
+}
+bool testSelfAssignment()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v = v;
+  return v[0] == 1 && v.getSize() == 1;
+}
+bool testNonConstModification()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v[0] = 2;
+  return v[0] == 2;
+}
+bool testInsertSingle()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(3);
+  v.insert(1, 2);
+  return v.getSize() == 3 && v[0] == 1 && v[1] == 2 && v[2] == 3;
+}
+bool testInsertRange()
+{
+  topit::Vector< int > v, src;
+  v.pushBack(1);
+  v.pushBack(4);
+  src.pushBack(2);
+  src.pushBack(3);
+  v.insert(1, src, 0, 2);
+  return v.getSize() == 4 && v[1] == 2 && v[2] == 3;
+}
+bool testEraseSingle()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.erase(1);
+  return v.getSize() == 2 && v[0] == 1 && v[1] == 3;
+}
+bool testEraseRange()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.pushBack(4);
+  v.erase(1, 3);
+  return v.getSize() == 2 && v[0] == 1 && v[1] == 4;
+}
 
 int main()
 {
   using test_t = bool (*)();
   using pair_t = std::pair< const char *, test_t >;
-  pair_t tests[] = {{"Default vector is empty", testDefaultVector},
+  pair_t tests[] = {
+    {"Default vector is empty", testDefaultVector},
     {"Default vector is not empty", testVectorWithValue},
     {"Copy constructor works", testCopyConstructor},
     {"Elements must be equal", testElementAccess},
+    {"Const elements must be equal", testElementConstAccess},
+    {"Out of bound at throws", testElementOutOfBoundCheckedAccess},
+    {"In bound at works", testElementInboundCheckedAccess},
+    {"Const out of bound at throws", testElementOutOfBoundConstCheckedAccess},
+    {"Const in bound at works", testElementInboundConstCheckedAccess},
     {"Vector after pop back must be empty", testAfterPopEmpty},
     {"Vector after pop back must have size = 1", testSizeAfterPop},
     {"Vector after pop front must be empty", testAfterPopFrontEmpty},
@@ -194,7 +265,15 @@ int main()
     {"Vector must have cap == size", testCapacity},
     {"Capacity must not change after pop back", testCapacityAfterPopBack},
     {"Assignment operator works", testAssignmentOperator},
-    {"Push front works", testPushFront}
+    {"Push front works", testPushFront},
+    {"Move constructor works", testMoveConstructor},
+    {"Move assignment works", testMoveAssignment},
+    {"Self assignment works", testSelfAssignment},
+    {"Non-const modification works", testNonConstModification},
+    {"Insert single works", testInsertSingle},
+    {"Insert range works", testInsertRange},
+    {"Erase single works", testEraseSingle},
+    {"Erase range works", testEraseRange}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;
