@@ -3,7 +3,11 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <utility>
+// итератор для вектора
+// 3 insert/erase (iterator)
+// еттсы
 namespace topit
 {
   template < class T > struct Vector
@@ -21,9 +25,11 @@ namespace topit
     Vector< T > &operator=(const Vector< T > &rhs);
     Vector< T > &operator=(Vector< T >&&) noexcept;
     ~Vector< T >();
+
     T &operator[](size_t id) noexcept;
     const T &operator[](size_t id) const noexcept;
-
+    T& at(size_t id);
+    const T& at(size_t id) const;
 
     size_t getSize() const noexcept;
     size_t getCapacity() const noexcept;
@@ -33,6 +39,16 @@ namespace topit
     void popBack() noexcept;
     void popFront();
     void swap(Vector< T > &rhs) noexcept;
+
+    // стр гарант + тест
+    void insert(size_t i, const T& val);
+    void erase(size_t i);
+    void insert(size_t i, const Vector< T >& rhs, size_t beg, size_t end);
+    void erase(size_t beg, size_t end);
+
+
+    template< class VecIt, class FwdIt>
+    void insert(VecIt pos, FwdIt beg, FwdIt end);
   };
 }
 
@@ -104,10 +120,28 @@ template < class T > const T &topit::Vector< T >::operator[](size_t id) const no
   return data_[id];
 }
 
+template< class T >
+T& topit::Vector< T >::at(size_t id)
+{
+  const Vector< T >* cthis = this;
+  const T& ret = cthis->at(id);
+  return const_cast< T& >(ret);
+}
+
+template< class T >
+const T& topit::Vector< T >::at(size_t id) const
+{
+  if (id < getSize()) {
+    return data_[id];
+  }
+  throw std::out_of_range("bad id");  
+}
+
 template < class T > T &topit::Vector< T >::operator[](size_t id) noexcept
 {
-  assert(id < getSize());
-  return data_[id];
+  const Vector< T >* cthis = this;
+  const T& ret = (*cthis)(id);
+  return const_cast< T >(ret);
 }
 
 template < class T > size_t topit::Vector< T >::getSize() const noexcept
