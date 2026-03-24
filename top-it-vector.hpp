@@ -15,11 +15,15 @@ namespace topit
 
   public:
     Vector< T >();
+    Vector< T >(Vector< T >&&) noexcept;
     Vector< T >(const Vector< T > &);
     Vector< T > &operator=(const Vector< T > &rhs);
+    Vector< T > &operator=(Vector< T >&&) noexcept;
     ~Vector< T >();
     T &operator[](size_t id) noexcept;
     const T &operator[](size_t id) const noexcept;
+
+
     size_t getSize() const noexcept;
     size_t getCapacity() const noexcept;
     bool isEmpty() const noexcept;
@@ -29,6 +33,15 @@ namespace topit
     void popFront();
     void swap(Vector< T > &rhs) noexcept;
   };
+}
+
+template< class T >
+topit::Vector< T >::Vector(Vector< T >&& rhs) noexcept:
+  data_(rhs.data_),
+  size_(rhs.size_),
+  capacity_(rhs.capacity_)
+{
+  rhs.data_ = nullptr;
 }
 
 template < class T > size_t topit::Vector< T >::getCapacity() const noexcept
