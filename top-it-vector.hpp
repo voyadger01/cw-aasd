@@ -5,6 +5,7 @@
 #include <memory>
 #include <stdexcept>
 #include <utility>
+#include "top-it-iterator.hpp"
 // итератор для вектора
 // 3 insert/erase (iterator)
 // тесты
@@ -31,6 +32,11 @@ namespace topit
     T &at(size_t id);
     const T &at(size_t id) const;
 
+    LIter< T > begin() noexcept;
+    LIter< T > end() noexcept;
+    LCIter< T > begin() const noexcept;
+    LCIter< T > end() const noexcept;
+
     size_t getSize() const noexcept;
     size_t getCapacity() const noexcept;
     bool isEmpty() const noexcept;
@@ -39,13 +45,10 @@ namespace topit
     void popBack() noexcept;
     void popFront();
     void swap(Vector< T > &rhs) noexcept;
-
-    // стр гарант + тест + переиспользовать
     void insert(size_t i, const T &val);
     void erase(size_t i);
     void insert(size_t i, const Vector< T > &rhs, size_t beg, size_t end);
     void erase(size_t beg, size_t end);
-
     template < class VecIt, class FwdIt > void insert(VecIt pos, FwdIt beg, FwdIt end);
   };
 }
@@ -136,7 +139,7 @@ template < class T > T &topit::Vector< T >::operator[](size_t id) noexcept
 {
   const Vector< T > *cthis = this;
   const T &ret = (*cthis)[id];
-  return const_cast< T& >(ret);
+  return const_cast< T & >(ret);
 }
 
 template < class T > size_t topit::Vector< T >::getSize() const noexcept
@@ -250,6 +253,37 @@ template < class T > void topit::Vector< T >::insert(size_t i, const T &val)
   Vector< T > tmp;
   tmp.pushBack(val);
   insert(i, tmp, 0, 1);
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::begin() noexcept
+{
+  return LIter< T >(this, 0);
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::end() noexcept
+{
+  return LIter< T >(this, size_);
+}
+
+template < class T > topit::LCIter< T > topit::Vector< T >::begin() const noexcept
+{
+  return LCIter< T >(this, 0);
+}
+
+template < class T > topit::LCIter< T > topit::Vector< T >::end() const noexcept
+{
+  return LCIter< T >(this, size_);
+}
+
+template < class T >
+template < class VecIt, class FwdIt >
+void topit::Vector< T >::insert(VecIt pos, FwdIt beg, FwdIt end)
+{
+  Vector< T > tmp;
+  for (FwdIt it = beg; it != end; ++it) {
+    tmp.pushBack(*it);
+  }
+  insert(pos.idx_, tmp, 0, tmp.getSize());
 }
 
 #endif
