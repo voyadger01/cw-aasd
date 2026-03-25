@@ -7,7 +7,7 @@
 #include <utility>
 // итератор для вектора
 // 3 insert/erase (iterator)
-// еттсы
+// тесты
 namespace topit
 {
   template < class T > struct Vector
