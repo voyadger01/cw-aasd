@@ -50,6 +50,12 @@ namespace topit
     void insert(size_t i, const Vector< T > &rhs, size_t beg, size_t end);
     void erase(size_t beg, size_t end);
     template < class VecIt, class FwdIt > void insert(VecIt pos, FwdIt beg, FwdIt end);
+    LIter< T > insert(LIter< T > pos, const T &val);
+    LIter< T > insert(LIter< T > pos, size_t count, const T &val);
+    LIter< T > insert(LIter< T > pos, const Vector< T > &other);
+    LIter< T > erase(LIter< T > pos);
+    LIter< T > erase(LIter< T > first, LIter< T > last);
+    LIter< T > erase(LCIter< T > pos);
   };
 }
 
@@ -284,6 +290,52 @@ void topit::Vector< T >::insert(VecIt pos, FwdIt beg, FwdIt end)
     tmp.pushBack(*it);
   }
   insert(pos.idx_, tmp, 0, tmp.getSize());
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::insert(LIter< T > pos, const T &val)
+{
+  size_t idx = pos.idx_;
+  insert(idx, val);
+  return LIter< T >(this, idx);
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::insert(LIter< T > pos, size_t count, const T &val)
+{
+  size_t idx = pos.idx_;
+  Vector< T > tmp;
+  for (size_t i = 0; i < count; ++i) {
+    tmp.pushBack(val);
+  }
+  insert(idx, tmp, 0, tmp.getSize());
+  return LIter< T >(this, idx);
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::insert(LIter< T > pos, const Vector< T > &other)
+{
+  size_t idx = pos.idx_;
+  insert(idx, other, 0, other.getSize());
+  return LIter< T >(this, idx);
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::erase(LIter< T > pos)
+{
+  size_t idx = pos.idx_;
+  erase(idx);
+  return LIter< T >(this, idx);
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::erase(LIter< T > first, LIter< T > last)
+{
+  size_t beg = first.idx_;
+  erase(beg, last.idx_);
+  return LIter< T >(this, beg);
+}
+
+template < class T > topit::LIter< T > topit::Vector< T >::erase(LCIter< T > pos)
+{
+  size_t idx = pos.idx_;
+  erase(idx);
+  return LIter< T >(this, idx);
 }
 
 #endif
