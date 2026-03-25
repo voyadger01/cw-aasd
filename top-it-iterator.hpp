@@ -8,7 +8,6 @@ namespace topit
   template < class T > class LIter
   {
     friend class Vector< T >;
-    friend LIter operator+(signed_size_t, const LIter &);
     Vector< T > *vec_;
     size_t idx_;
 
@@ -36,7 +35,6 @@ namespace topit
   template < class T > class LCIter
   {
     friend class Vector< T >;
-    friend LCIter operator+(signed_size_t, const LCIter &);
     const Vector< T > *vec_;
     size_t idx_;
 

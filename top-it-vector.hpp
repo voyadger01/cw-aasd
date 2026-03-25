@@ -6,9 +6,6 @@
 #include <stdexcept>
 #include <utility>
 #include "top-it-iterator.hpp"
-// итератор для вектора
-// 3 insert/erase (iterator)
-// тесты
 namespace topit
 {
   template < class T > struct Vector
@@ -16,7 +13,8 @@ namespace topit
   private:
     T *data_;
     size_t size_, capacity_;
-
+    friend class LIter< T >;
+    friend class LCIter< T >;
     explicit Vector< T >(size_t k);
 
   public:
@@ -51,8 +49,8 @@ namespace topit
     void erase(size_t beg, size_t end);
     template < class VecIt, class FwdIt > void insert(VecIt pos, FwdIt beg, FwdIt end);
     LIter< T > insert(LIter< T > pos, const T &val);
-    LIter< T > insert(LIter< T > pos, size_t count, const T &val);
     LIter< T > insert(LIter< T > pos, const Vector< T > &other);
+    LIter< T > insert(size_t i, const Vector< T > &other);
     LIter< T > erase(LIter< T > pos);
     LIter< T > erase(LIter< T > first, LIter< T > last);
     LIter< T > erase(LCIter< T > pos);
@@ -299,15 +297,10 @@ template < class T > topit::LIter< T > topit::Vector< T >::insert(LIter< T > pos
   return LIter< T >(this, idx);
 }
 
-template < class T > topit::LIter< T > topit::Vector< T >::insert(LIter< T > pos, size_t count, const T &val)
+template < class T > topit::LIter< T > topit::Vector< T >::insert(size_t i, const Vector< T > &other)
 {
-  size_t idx = pos.idx_;
-  Vector< T > tmp;
-  for (size_t i = 0; i < count; ++i) {
-    tmp.pushBack(val);
-  }
-  insert(idx, tmp, 0, tmp.getSize());
-  return LIter< T >(this, idx);
+  insert(i, other, 0, other.getSize());
+  return LIter< T >(this, i);
 }
 
 template < class T > topit::LIter< T > topit::Vector< T >::insert(LIter< T > pos, const Vector< T > &other)

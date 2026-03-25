@@ -1,3 +1,4 @@
+#include "top-it-iterator.hpp"
 #include "top-it-vector.hpp"
 #include <cstddef>
 #include <iostream>
@@ -242,13 +243,92 @@ bool testEraseRange()
   v.erase(1, 3);
   return v.getSize() == 2 && v[0] == 1 && v[1] == 4;
 }
+bool testInsertIteratorSingle()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(3);
+  v.insert(v.begin(), 2);
+  return v.getSize() == 3 && v[0] == 2 && v[1] == 1 && v[2] == 3;
+}
+bool testInsertIteratorVector()
+{
+  topit::Vector< int > v, src;
+  v.pushBack(1);
+  v.pushBack(4);
+  src.pushBack(2);
+  src.pushBack(3);
+  v.insert(v.begin() + 1, src);
+  return v.getSize() == 4 && v[1] == 2 && v[2] == 3;
+}
+bool testEraseIteratorSingle()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.erase(v.begin() + 1);
+  return v.getSize() == 2 && v[0] == 1 && v[1] == 3;
+}
+bool testEraseIteratorRange()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.pushBack(4);
+  v.erase(v.begin() + 1, v.begin() + 3);
+  return v.getSize() == 2 && v[0] == 1 && v[1] == 4;
+}
+bool testEraseConstIterator()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  const topit::Vector< int > &cv = v;
+  v.erase(cv.begin() + 1);
+  return v.getSize() == 2 && v[0] == 1 && v[1] == 3;
+}
+bool testIteratorTraversal()
+{
+  topit::Vector< int > v;
+  v.pushBack(10);
+  v.pushBack(20);
+  v.pushBack(30);
+  int sum = 0;
+  for (topit::LIter< int > it = v.begin(); it != v.end(); ++it) {
+    sum += *it;
+  }
+  return sum == 60;
+}
+bool testTemplateInsertExternalIterators()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(4);
+  int arr[] = {2, 3};
+  v.insert(v.begin() + 1, arr, arr + 2);
+  return v.getSize() == 4 && v[1] == 2 && v[2] == 3;
+}
+
+bool testInsertIndexVector()
+{
+  topit::Vector< int > v, src;
+  v.pushBack(1);
+  v.pushBack(5);
+  src.pushBack(2);
+  src.pushBack(3);
+  src.pushBack(4);
+  v.insert(1, src);
+  return v.getSize() == 5 && v[0] == 1 && v[1] == 2 && v[2] == 3 && v[3] == 4 && v[4] == 5;
+}
 
 int main()
 {
   using test_t = bool (*)();
   using pair_t = std::pair< const char *, test_t >;
-  pair_t tests[] = {
-    {"Default vector is empty", testDefaultVector},
+  pair_t tests[] = {{"Default vector is empty", testDefaultVector},
     {"Default vector is not empty", testVectorWithValue},
     {"Copy constructor works", testCopyConstructor},
     {"Elements must be equal", testElementAccess},
@@ -273,7 +353,15 @@ int main()
     {"Insert single works", testInsertSingle},
     {"Insert range works", testInsertRange},
     {"Erase single works", testEraseSingle},
-    {"Erase range works", testEraseRange}
+    {"Erase range works", testEraseRange},
+    {"Insert via iterator + single value", testInsertIteratorSingle},
+    {"Insert via iterator + Vector", testInsertIteratorVector},
+    {"Erase via iterator (single)", testEraseIteratorSingle},
+    {"Erase via iterator range", testEraseIteratorRange},
+    {"Erase via const iterator", testEraseConstIterator},
+    {"Iterator traversal with begin/end", testIteratorTraversal},
+    {"Insert by index + Vector", testInsertIndexVector},
+    {"Template insert with external iterators", testTemplateInsertExternalIterators}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;
