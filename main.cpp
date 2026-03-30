@@ -324,11 +324,18 @@ bool testInsertIndexVector()
   return v.getSize() == 5 && v[0] == 1 && v[1] == 2 && v[2] == 3 && v[3] == 4 && v[4] == 5;
 }
 
+bool testInitializerListConstruct()
+{
+  topit::Vector< int > v{1, 2};
+  return v.getSize() == 2;
+}
+
 int main()
 {
   using test_t = bool (*)();
   using pair_t = std::pair< const char *, test_t >;
-  pair_t tests[] = {{"Default vector is empty", testDefaultVector},
+  pair_t tests[] = {
+    {"Default vector is empty", testDefaultVector},
     {"Default vector is not empty", testVectorWithValue},
     {"Copy constructor works", testCopyConstructor},
     {"Elements must be equal", testElementAccess},
@@ -361,7 +368,8 @@ int main()
     {"Erase via const iterator", testEraseConstIterator},
     {"Iterator traversal with begin/end", testIteratorTraversal},
     {"Insert by index + Vector", testInsertIndexVector},
-    {"Template insert with external iterators", testTemplateInsertExternalIterators}
+    {"Template insert with external iterators", testTemplateInsertExternalIterators},
+    {"Initializer list constructs properly", testInitializerListConstruct}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;

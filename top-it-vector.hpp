@@ -2,6 +2,7 @@
 #define TOP_IT_VECTOR_HPP
 #include <cassert>
 #include <cstddef>
+#include <initializer_list>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -21,6 +22,7 @@ namespace topit
     Vector< T >();
     Vector< T >(Vector< T > &&) noexcept;
     Vector< T >(const Vector< T > &);
+    explicit Vector< T >(std::initializer_list< T >) noexcept;
     Vector< T > &operator=(const Vector< T > &rhs);
     Vector< T > &operator=(Vector< T > &&) noexcept;
     ~Vector< T >();
@@ -43,18 +45,28 @@ namespace topit
     void popBack() noexcept;
     void popFront();
     void swap(Vector< T > &rhs) noexcept;
-    void insert(size_t i, const T &val);
+
     void erase(size_t i);
-    void insert(size_t i, const Vector< T > &rhs, size_t beg, size_t end);
     void erase(size_t beg, size_t end);
+    LIter< T > erase(LIter< T > pos);
+    LIter< T > erase(LIter< T > first, LIter< T > last);
+    LIter< T > erase(LCIter< T > pos);
+    void insert(size_t i, const Vector< T > &rhs, size_t beg, size_t end);
+    void insert(size_t i, const T &val);
     template < class VecIt, class FwdIt > void insert(VecIt pos, FwdIt beg, FwdIt end);
     LIter< T > insert(LIter< T > pos, const T &val);
     LIter< T > insert(LIter< T > pos, const Vector< T > &other);
     LIter< T > insert(size_t i, const Vector< T > &other);
-    LIter< T > erase(LIter< T > pos);
-    LIter< T > erase(LIter< T > first, LIter< T > last);
-    LIter< T > erase(LCIter< T > pos);
   };
+}
+
+template < class T > topit::Vector< T >::Vector(std::initializer_list< T > il) noexcept:
+  Vector< T >(il.size())
+{
+  size_t i = 0;
+  for (auto &&v: il) {
+    data_[i++] = v;
+  }
 }
 
 template < class T >
