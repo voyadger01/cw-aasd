@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <initializer_list>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <utility>
 #include "top-it-iterator.hpp"
@@ -17,6 +18,10 @@ namespace topit
     friend class LIter< T >;
     friend class LCIter< T >;
     explicit Vector< T >(size_t k);
+    // без проверки на капасити
+    void pushBackImpl(const T &);
+    // классная(::operator new и тд)
+    void reserve(size_t pos, size_t count);
 
   public:
     Vector< T >();
@@ -45,6 +50,8 @@ namespace topit
     void popBack() noexcept;
     void popFront();
     void swap(Vector< T > &rhs) noexcept;
+    void reserve(size_t cap);
+    void shrinkToFit();
 
     void erase(size_t i);
     void erase(size_t beg, size_t end);
@@ -57,14 +64,40 @@ namespace topit
     LIter< T > insert(LIter< T > pos, const T &val);
     LIter< T > insert(LIter< T > pos, const Vector< T > &other);
     LIter< T > insert(size_t i, const Vector< T > &other);
+    template < class IT > size_t pushBackRange(IT begin, size_t k);
   };
 }
 
-template < class T > topit::Vector< T >::Vector(std::initializer_list< T > il) noexcept:
+template < class T > void topit::Vector< T >::reserve(size_t cap)
+{
+  if (capacity_ >= cap) {
+    return;
+  }
+  T *d = new T[cap];
+  try {
+    for (size_t i = 0; i < getSize(); i++) {
+      d[i] = std::move(data_[i]);
+    }
+  } catch (...) {
+    delete[] d;
+    throw;
+  }
+  delete[] data_;
+  data_ = d;
+  capacity_ = cap;
+}
+template < class T > template < class IT > size_t topit::Vector< T >::pushBackRange(IT begin, size_t k)
+{}
+
+template < class T > void topit::Vector< T >::pushBackImpl(const T &)
+{}
+
+template < class T >
+topit::Vector< T >::Vector(std::initializer_list< T > il) noexcept:
   Vector< T >(il.size())
 {
   size_t i = 0;
-  for (auto &&v: il) {
+  for (auto &&v : il) {
     data_[i++] = v;
   }
 }
@@ -164,10 +197,21 @@ template < class T > size_t topit::Vector< T >::getSize() const noexcept
 }
 template < class T >
 topit::Vector< T >::Vector(size_t k):
-  data_(new T[k]),
+  data_(static_cast< T * >(::operator new(sizeof(T) * k))),
   size_(k),
   capacity_(k)
-{}
+{
+  size_t i = 0;
+  try {
+    for (; i < k; i++) {
+      ::operator new (data_ + i)(T());
+    }
+  } catch (...) {
+    for (size_t j = 0; j < i; i++) {
+      (data_ + i)->~T();
+    }
+  }
+}
 
 template < class T >
 topit::Vector< T >::Vector(const Vector< T > &rhs):
