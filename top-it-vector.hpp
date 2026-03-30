@@ -73,19 +73,23 @@ template < class T > void topit::Vector< T >::reserve(size_t cap)
   if (capacity_ >= cap) {
     return;
   }
-  T *d = new T[cap];
+  size_t i = 0;
+  T *d = static_cast< T * >(::operator new(sizeof(T) * cap));
   try {
-    for (size_t i = 0; i < getSize(); i++) {
-      d[i] = std::move(data_[i]);
+    for (; i < getSize(); i++) {
+      new (d + 1) T(std::move(data_[i]));
     }
   } catch (...) {
-    delete[] d;
+    for (size_t j = 0; j < i; ++j) {
+      (d + i)->~T();
+    }
     throw;
   }
   delete[] data_;
   data_ = d;
   capacity_ = cap;
 }
+
 template < class T > template < class IT > size_t topit::Vector< T >::pushBackRange(IT begin, size_t k)
 {}
 
@@ -98,7 +102,7 @@ topit::Vector< T >::Vector(std::initializer_list< T > il) noexcept:
 {
   size_t i = 0;
   for (auto &&v : il) {
-    data_[i++] = v;
+    data_[i++] = std::move(v);
   }
 }
 
@@ -198,20 +202,9 @@ template < class T > size_t topit::Vector< T >::getSize() const noexcept
 template < class T >
 topit::Vector< T >::Vector(size_t k):
   data_(static_cast< T * >(::operator new(sizeof(T) * k))),
-  size_(k),
+  size_(0),
   capacity_(k)
-{
-  size_t i = 0;
-  try {
-    for (; i < k; i++) {
-      ::operator new (data_ + i)(T());
-    }
-  } catch (...) {
-    for (size_t j = 0; j < i; i++) {
-      (data_ + i)->~T();
-    }
-  }
-}
+{}
 
 template < class T >
 topit::Vector< T >::Vector(const Vector< T > &rhs):
