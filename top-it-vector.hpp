@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <utility>
 #include "top-it-iterator.hpp"
+// 1. чтобы не требовался конструктор по умолчанию
 namespace topit
 {
   template < class T > struct Vector
@@ -18,7 +19,7 @@ namespace topit
     friend class LIter< T >;
     friend class LCIter< T >;
     explicit Vector< T >(size_t k);
-    // без проверки на капасити
+    // без проверки на капасити тоже классная
     void pushBackImpl(const T &);
     // классная(::operator new и тд)
     void reserve(size_t pos, size_t count);
@@ -91,9 +92,6 @@ template < class T > void topit::Vector< T >::reserve(size_t cap)
 }
 
 template < class T > template < class IT > size_t topit::Vector< T >::pushBackRange(IT begin, size_t k)
-{}
-
-template < class T > void topit::Vector< T >::pushBackImpl(const T &)
 {}
 
 template < class T >
@@ -239,7 +237,10 @@ topit::Vector< T >::Vector():
 
 template < class T > topit::Vector< T >::~Vector< T >()
 {
-  delete[] data_;
+  for (size_t i = 0; i < size_; ++i) {
+    data_[i].~T();
+  }
+  ::operator delete(data_);
 }
 
 template < class T > bool topit::Vector< T >::isEmpty() const noexcept
@@ -378,6 +379,55 @@ template < class T > topit::LIter< T > topit::Vector< T >::erase(LCIter< T > pos
   size_t idx = pos.idx_;
   erase(idx);
   return LIter< T >(this, idx);
+}
+
+template < class T > void topit::Vector< T >::pushBackImpl(const T &val)
+{
+  new (data_ + size_) T(val);
+  ++size_;
+}
+
+template < class T > void topit::Vector< T >::reserve(size_t pos, size_t count)
+{
+  assert(pos <= size_);
+  if (count == 0) {
+    return;
+  }
+  if (size_ + count > capacity_) {
+    size_t new_cap = capacity_ ? capacity_ * 2 : 1;
+    while (new_cap < size_ + count) {
+      new_cap *= 2;
+    }
+    T *new_data = static_cast< T * >(::operator new(sizeof(T) * new_cap));
+    size_t constructed = 0;
+    try {
+      for (; constructed < pos; ++constructed) {
+        new (new_data + constructed) T(std::move(data_[constructed]));
+      }
+      for (size_t i = pos; i < size_; ++i, ++constructed) {
+        new (new_data + constructed + count) T(std::move(data_[i]));
+      }
+    } catch (...) {
+      for (size_t i = 0; i < constructed; ++i) {
+        new_data[i].~T();
+      }
+      ::operator delete(new_data);
+      throw;
+    }
+    for (size_t i = 0; i < size_; ++i) {
+      data_[i].~T();
+    }
+    ::operator delete(data_);
+
+    data_ = new_data;
+    capacity_ = new_cap;
+  } else {
+    for (size_t i = size_; i > pos; --i) {
+      new (data_ + i + count - 1) T(std::move(data_[i - 1]));
+      data_[i - 1].~T();
+    }
+  }
+  size_ += count;
 }
 
 #endif
