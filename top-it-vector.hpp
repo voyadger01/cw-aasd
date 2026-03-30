@@ -78,15 +78,20 @@ template < class T > void topit::Vector< T >::reserve(size_t cap)
   T *d = static_cast< T * >(::operator new(sizeof(T) * cap));
   try {
     for (; i < getSize(); i++) {
-      new (d + 1) T(std::move(data_[i]));
+      new (d + i) T(std::move(data_[i]));
     }
   } catch (...) {
     for (size_t j = 0; j < i; ++j) {
-      (d + i)->~T();
+      d[j].~T();
     }
+    ::operator delete(d);
     throw;
   }
-  delete[] data_;
+  for (size_t j = 0; j < size_; ++j) {
+    data_[j].~T();
+  }
+  ::operator delete(data_);
+
   data_ = d;
   capacity_ = cap;
 }
@@ -100,7 +105,7 @@ topit::Vector< T >::Vector(std::initializer_list< T > il) noexcept:
 {
   size_t i = 0;
   for (auto &&v : il) {
-    data_[i++] = std::move(v);
+    new (data_ + i++) T(std::move(v));
   }
 }
 
@@ -132,20 +137,34 @@ template < class T > void topit::Vector< T >::pushFront(const T &val)
 {
   if (size_ == capacity_) {
     size_t new_cap = capacity_ ? capacity_ * 2 : 1;
-    T *new_data = new T[new_cap];
-    for (size_t i = 0; i < size_; i++) {
-      new_data[i + 1] = data_[i];
+    T *new_data = static_cast< T * >(::operator new(sizeof(T) * new_cap));
+    try {
+      new (new_data) T(val);
+      for (size_t i = 0; i < size_; ++i) {
+        new (new_data + i + 1) T(std::move(data_[i]));
+      }
+    } catch (...) {
+      for (size_t i = 0; i < size_ + 1; ++i) {
+        new_data[i].~T();
+      }
+      ::operator delete(new_data);
+      throw;
     }
-    delete[] data_;
+    for (size_t i = 0; i < size_; ++i) {
+      data_[i].~T();
+    }
+    ::operator delete(data_);
     data_ = new_data;
     capacity_ = new_cap;
+    ++size_;
   } else {
-    for (size_t i = size_; i > 0; i++) {
-      data_[i] = data_[i - 1];
+    for (size_t i = size_; i > 0; --i) {
+      new (data_ + i) T(std::move(data_[i - 1]));
+      data_[i - 1].~T();
     }
+    new (data_) T(val);
+    ++size_;
   }
-  data_[0] = val;
-  ++size_;
 }
 
 template < class T > void topit::Vector< T >::swap(Vector< T > &rhs) noexcept
@@ -160,8 +179,25 @@ template < class T > topit::Vector< T > &topit::Vector< T >::operator=(const Vec
   if (this == std::addressof(rhs)) {
     return *this;
   }
-  Vector< T > copy(rhs);
-  swap(copy);
+  for (size_t i = 0; i < size_; ++i) {
+    data_[i].~T();
+  }
+  ::operator delete(data_);
+
+  size_ = rhs.size_;
+  capacity_ = rhs.capacity_;
+  data_ = static_cast< T * >(::operator new(sizeof(T) * capacity_));
+  try {
+    for (size_t i = 0; i < size_; ++i) {
+      new (data_ + i) T(rhs.data_[i]);
+    }
+  } catch (...) {
+    ::operator delete(data_);
+    data_ = nullptr;
+    size_ = 0;
+    capacity_ = 0;
+    throw;
+  }
   return *this;
 }
 
@@ -209,7 +245,7 @@ topit::Vector< T >::Vector(const Vector< T > &rhs):
   Vector(rhs.getSize())
 {
   for (size_t i = 0; i < getSize(); i++) {
-    data_[i] = rhs[i];
+    new (data_ + i) T(rhs.data_[i]);
   }
 }
 
@@ -217,15 +253,27 @@ template < class T > void topit::Vector< T >::pushBack(const T &val)
 {
   if (size_ == capacity_) {
     size_t new_cap = capacity_ ? capacity_ * 2 : 1;
-    T *new_data = new T[new_cap];
-    for (size_t i = 0; i < size_; i++) {
-      new_data[i] = data_[i];
+    T *new_data = static_cast< T * >(::operator new(sizeof(T) * new_cap));
+    try {
+      for (size_t i = 0; i < size_; ++i) {
+        new (new_data + i) T(std::move(data_[i]));
+      }
+    } catch (...) {
+      for (size_t i = 0; i < size_; ++i) {
+        new_data[i].~T();
+      }
+      ::operator delete(new_data);
+      throw;
     }
-    delete[] data_;
+    for (size_t i = 0; i < size_; ++i) {
+      data_[i].~T();
+    }
+    ::operator delete(data_);
     data_ = new_data;
     capacity_ = new_cap;
   }
-  data_[size_++] = val;
+  new (data_ + size_) T(val);
+  ++size_;
 }
 
 template < class T >
@@ -257,11 +305,11 @@ template < class T > void topit::Vector< T >::popBack() noexcept
 template < class T > void topit::Vector< T >::popFront()
 {
   assert(size_ > 0);
-  Vector< T > copy(getSize() - 1);
-  for (size_t i = 1; i < getSize(); i++) {
-    copy[i - 1] = (*this)[i];
+  data_[0].~T();
+  for (size_t i = 0; i < size_ - 1; ++i) {
+    data_[i] = std::move(data_[i + 1]);
   }
-  swap(copy);
+  --size_;
 }
 
 template < class T > void topit::Vector< T >::erase(size_t beg, size_t end)
@@ -270,14 +318,13 @@ template < class T > void topit::Vector< T >::erase(size_t beg, size_t end)
   if (beg == end) {
     return;
   }
-  Vector< T > newVec(size_ - (end - beg));
-  for (size_t i = 0; i < beg; ++i) {
-    newVec.data_[i] = data_[i];
+  for (size_t i = beg; i < end; ++i) {
+    data_[i].~T();
   }
   for (size_t i = end; i < size_; ++i) {
-    newVec.data_[i - (end - beg)] = data_[i];
+    data_[i - (end - beg)] = std::move(data_[i]);
   }
-  swap(newVec);
+  size_ -= (end - beg);
 }
 
 template < class T > void topit::Vector< T >::erase(size_t i)
@@ -290,16 +337,32 @@ template < class T > void topit::Vector< T >::insert(size_t i, const Vector< T >
   assert(i <= size_ && beg <= end && end <= rhs.getSize());
   size_t count = end - beg;
   Vector< T > newVec(size_ + count);
-  for (size_t k = 0; k < i; ++k) {
-    newVec.data_[k] = data_[k];
+  try {
+    for (size_t k = 0; k < i; ++k) {
+      new (newVec.data_ + k) T(std::move(data_[k]));
+    }
+    for (size_t k = 0; k < count; ++k) {
+      new (newVec.data_ + i + k) T(rhs.data_[beg + k]);
+    }
+    for (size_t k = i; k < size_; ++k) {
+      new (newVec.data_ + count + k) T(std::move(data_[k]));
+    }
+  } catch (...) {
+    for (size_t k = 0; k < newVec.size_; ++k) {
+      newVec.data_[k].~T();
+    }
+    ::operator delete(newVec.data_);
+    throw;
   }
-  for (size_t k = 0; k < count; ++k) {
-    newVec.data_[i + k] = rhs.at(beg + k);
+  for (size_t k = 0; k < size_; ++k) {
+    data_[k].~T();
   }
-  for (size_t k = i; k < size_; ++k) {
-    newVec.data_[count + k] = data_[k];
-  }
-  swap(newVec);
+  ::operator delete(data_);
+
+  data_ = newVec.data_;
+  size_ = newVec.size_;
+  capacity_ = newVec.capacity_;
+  newVec.data_ = nullptr;
 }
 
 template < class T > void topit::Vector< T >::insert(size_t i, const T &val)
