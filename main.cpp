@@ -330,6 +330,28 @@ bool testInitializerListConstruct()
   return v.getSize() == 2;
 }
 
+bool testPushBackRange()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  int arr[] = {2, 3, 4};
+  v.pushBackRange(arr, 3);
+  return v.getSize() == 4 && v[0] == 1 && v[1] == 2 && v[2] == 3 && v[3] == 4;
+}
+
+bool testShrinkToFit()
+{
+  topit::Vector< int > v;
+  v.pushBack(1);
+  v.pushBack(2);
+  v.pushBack(3);
+  v.pushBack(4);
+  v.popBack();
+  v.popBack();
+  v.shrinkToFit();
+  return v.getSize() == 2 && v.getCapacity() == 2 && v[0] == 1 && v[1] == 2;
+}
+
 int main()
 {
   using test_t = bool (*)();
@@ -369,7 +391,9 @@ int main()
     {"Iterator traversal with begin/end", testIteratorTraversal},
     {"Insert by index + Vector", testInsertIndexVector},
     {"Template insert with external iterators", testTemplateInsertExternalIterators},
-    {"Initializer list constructs properly", testInitializerListConstruct}
+    {"Initializer list constructs properly", testInitializerListConstruct},
+    {"PushBackRange works", testPushBackRange},
+    {"ShrinkToFit works", testShrinkToFit}
   };
   const size_t count = sizeof(tests) / sizeof(pair_t);
   std::cout << std::boolalpha;

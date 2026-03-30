@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <utility>
 #include "top-it-iterator.hpp"
-// 1. чтобы не требовался конструктор по умолчанию
 namespace topit
 {
   template < class T > struct Vector
@@ -19,16 +18,14 @@ namespace topit
     friend class LIter< T >;
     friend class LCIter< T >;
     explicit Vector< T >(size_t k);
-    // без проверки на капасити тоже классная
     void pushBackImpl(const T &);
-    // классная(::operator new и тд)
     void reserve(size_t pos, size_t count);
 
   public:
     Vector< T >();
     Vector< T >(Vector< T > &&) noexcept;
     Vector< T >(const Vector< T > &);
-    explicit Vector< T >(std::initializer_list< T >) noexcept;
+    Vector< T >(std::initializer_list< T >);
     Vector< T > &operator=(const Vector< T > &rhs);
     Vector< T > &operator=(Vector< T > &&) noexcept;
     ~Vector< T >();
@@ -116,12 +113,21 @@ template < class T > template < class IT > size_t topit::Vector< T >::pushBackRa
 }
 
 template < class T >
-topit::Vector< T >::Vector(std::initializer_list< T > il) noexcept:
+topit::Vector< T >::Vector(std::initializer_list< T > il):
   Vector< T >(il.size())
 {
   size_t i = 0;
-  for (auto &&v : il) {
-    new (data_ + i++) T(std::move(v));
+  try {
+    for (auto &&v : il) {
+      new (data_ + i) T(std::move(v));
+      ++i;
+    }
+    size_ = i;
+  } catch (...) {
+    for (size_t j = 0; j < i; ++j) {
+      data_[j].~T();
+    }
+    throw;
   }
 }
 
@@ -132,6 +138,8 @@ topit::Vector< T >::Vector(Vector< T > &&rhs) noexcept:
   capacity_(rhs.capacity_)
 {
   rhs.data_ = nullptr;
+  rhs.size_ = 0;
+  rhs.capacity_ = 0;
 }
 
 template < class T > size_t topit::Vector< T >::getCapacity() const noexcept
@@ -260,9 +268,10 @@ template < class T >
 topit::Vector< T >::Vector(const Vector< T > &rhs):
   Vector(rhs.getSize())
 {
-  for (size_t i = 0; i < getSize(); i++) {
+  for (size_t i = 0; i < rhs.getSize(); i++) {
     new (data_ + i) T(rhs.data_[i]);
   }
+  size_ = rhs.getSize();
 }
 
 template < class T > void topit::Vector< T >::pushBack(const T &val)
@@ -353,32 +362,36 @@ template < class T > void topit::Vector< T >::insert(size_t i, const Vector< T >
   assert(i <= size_ && beg <= end && end <= rhs.getSize());
   size_t count = end - beg;
   Vector< T > newVec(size_ + count);
+  size_t constructed = 0;
   try {
     for (size_t k = 0; k < i; ++k) {
-      new (newVec.data_ + k) T(std::move(data_[k]));
+      new (newVec.data_ + constructed) T(std::move(data_[k]));
+      ++constructed;
     }
     for (size_t k = 0; k < count; ++k) {
-      new (newVec.data_ + i + k) T(rhs.data_[beg + k]);
+      new (newVec.data_ + constructed) T(rhs.data_[beg + k]);
+      ++constructed;
     }
     for (size_t k = i; k < size_; ++k) {
-      new (newVec.data_ + count + k) T(std::move(data_[k]));
+      new (newVec.data_ + constructed) T(std::move(data_[k]));
+      ++constructed;
     }
+    newVec.size_ = constructed;
   } catch (...) {
-    for (size_t k = 0; k < newVec.size_; ++k) {
+    for (size_t k = 0; k < constructed; ++k) {
       newVec.data_[k].~T();
     }
-    ::operator delete(newVec.data_);
     throw;
   }
   for (size_t k = 0; k < size_; ++k) {
     data_[k].~T();
   }
   ::operator delete(data_);
-
   data_ = newVec.data_;
   size_ = newVec.size_;
   capacity_ = newVec.capacity_;
   newVec.data_ = nullptr;
+  newVec.size_ = 0; // <--- КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ
 }
 
 template < class T > void topit::Vector< T >::insert(size_t i, const T &val)
