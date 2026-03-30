@@ -97,7 +97,23 @@ template < class T > void topit::Vector< T >::reserve(size_t cap)
 }
 
 template < class T > template < class IT > size_t topit::Vector< T >::pushBackRange(IT begin, size_t k)
-{}
+{
+  if (k == 0) {
+    return 0;
+  }
+  if (size_ + k > capacity_) {
+    size_t new_cap = capacity_ ? capacity_ : 1;
+    while (new_cap < size_ + k) {
+      new_cap *= 2;
+    }
+    reserve(new_cap);
+  }
+  for (size_t i = 0; i < k; ++i) {
+    pushBackImpl(*begin);
+    ++begin;
+  }
+  return k;
+}
 
 template < class T >
 topit::Vector< T >::Vector(std::initializer_list< T > il) noexcept:
@@ -491,6 +507,40 @@ template < class T > void topit::Vector< T >::reserve(size_t pos, size_t count)
     }
   }
   size_ += count;
+}
+
+template < class T > void topit::Vector< T >::shrinkToFit()
+{
+  if (capacity_ > size_) {
+    if (size_ == 0) {
+      for (size_t i = 0; i < size_; ++i) {
+        data_[i].~T();
+      }
+      ::operator delete(data_);
+      data_ = nullptr;
+      capacity_ = 0;
+    } else {
+      T *new_data = static_cast< T * >(::operator new(sizeof(T) * size_));
+      size_t i = 0;
+      try {
+        for (; i < size_; ++i) {
+          new (new_data + i) T(std::move(data_[i]));
+        }
+      } catch (...) {
+        for (size_t j = 0; j < i; ++j) {
+          new_data[j].~T();
+        }
+        ::operator delete(new_data);
+        throw;
+      }
+      for (size_t j = 0; j < size_; ++j) {
+        data_[j].~T();
+      }
+      ::operator delete(data_);
+      data_ = new_data;
+      capacity_ = size_;
+    }
+  }
 }
 
 #endif
