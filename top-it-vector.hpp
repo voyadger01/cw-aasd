@@ -391,7 +391,7 @@ template < class T > void topit::Vector< T >::insert(size_t i, const Vector< T >
   size_ = newVec.size_;
   capacity_ = newVec.capacity_;
   newVec.data_ = nullptr;
-  newVec.size_ = 0; // <--- КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ
+  newVec.size_ = 0;
 }
 
 template < class T > void topit::Vector< T >::insert(size_t i, const T &val)
